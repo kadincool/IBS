@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {
+        margin: 0;
+      }
+      #tool {
+        background-color: darkslategray;
+        /*width: 100vw;
+        height: 100vh;
+        display: flex;*/
+      }
+      canvas {
+        outline-color: lightgray;
+        outline-style: dashed;
+        border-radius: 10px;
+      }
+      .preview {
+        /*display: inline-block;*/
+        width: 196px;
+        height: 128px;
+        background-color: black;
+        outline-color: lightgray;
+        outline-style: dashed;
+        border-radius: 10px;
+      }
+      .container {
+        width: 50vw;
+        height: 50vh;
+      }
+      /*table {
+        width: 100vw;
+        height: 100vh;
+      }
+      tr {
+        height: 50vh;
+        
+        outline-color: black;
+        outline-width: 1px;
+        outline-style: solid;
+      }
+      td {
+        width: 50vw;
+      }*/
+    </style>
+  </head>
+  <body>
+    <div id="tool">
+      <table>
+        <tbody>
+          <tr>
+            <th><div class="container">
+              <canvas id="mapCanvas" width="384" height="256"></canvas>
+            </div></th>
+            <th><div class="container">
+              2
+            </div></th>
+          </tr>
+          <tr>
+            <th><div class="container">
+              <canvas id="sprCanvas" width="256" height="256"></canvas>
+            </div></th>
+            <th><div class="container">
+              <div id="color1" class="preview">
+                <input id="col1input" type="text" class="colorInput" value="#fff" onchange="update()">
+              </div>
+              <div id="color2" class="preview">
+                <input id="col2input" type="text" class="colorInput" value="#0000" onchange="update()">
+              </div>
+              <p id="output">Output</p>
+              <input type="text" id="name" placeholder="Name"><button type="button" onclick="copy()">Copy</button><br>
+              <input type="text" id="data" placeholder="Data"><button type="button" onclick="load()">Load</button>
+            </div></th>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <script>
+      const canvas = document.getElementById("sprCanvas");
+      const can2d = canvas.getContext("2d");
+
+      const col1input = document.getElementById("col1input");
+      const col2input = document.getElementById("col2input");
+
+      const col1box = document.getElementById("color1");
+      const col2box = document.getElementById("color2");
+
+      const output = document.getElementById("output");
+      const name = document.getElementById("name");
+      const data = document.getElementById("data");
+
+      var col1;
+      var col2;
+
+      let clickX=0;
+      let clickY=0;
+
+      //var sprDat = 0x027F;
+      var sprDat = 0x0000;
+      function getBit(value, bit) {
+        return (value >> bit) % 2 == 1;
+      }
+      function toggleBit(value, bit) {
+        let set = 0b1 << bit;
+        return value ^ set;
+      }
+
+      function update() {
+        col1box.style.backgroundColor = col1input.value;
+        col2box.style.backgroundColor = col2input.value;
+
+        col1 = col1input.value;
+        col2 = col2input.value;
+
+        output.textContent = JSON.stringify({color1: col1, color2: col2, pattern: "0x" + sprDat.toString(16), name: name.value});
+        //output.textContent = `{color1: "${col1}", color2: "${col2}", pattern: 0x${sprDat.toString(16)}, name: "${name.value}"}`;//JSON.stringify({color1: col1, color2: col2, pattern: "0x" + sprDat.toString(16)});
+
+        //can2d.fillStyle = "black";
+        //can2d.fillRect(0, 0, canvas.width, canvas.height);
+        can2d.clearRect(0,0,canvas.width,canvas.height);
+        for (let i=0; i<16; i++) {
+          if (getBit(sprDat, i)) {
+            can2d.fillStyle = col2;
+          } else {
+            can2d.fillStyle = col1;
+          }
+          can2d.fillRect(i%4*64,Math.floor(i/4)*64,64,64);
+        }
+      }
+
+      function copy() {
+        update();
+        navigator.clipboard.writeText(output.textContent)
+        data.value = output.textContent;
+      }
+
+      function load() {
+        //sprDat = Number(data.value);
+        //console.log(data.value);
+        let unpacked = JSON.parse(data.value);
+        console.log(typeof unpacked);
+        if (typeof unpacked != "object") return;
+        col1input.value = unpacked.color1;
+        col2input.value = unpacked.color2;
+        sprDat = Number(unpacked.pattern);
+        name.value = unpacked.name;
+        //{"color1":"#8f0","color2":"#860","pattern":"0xfd80"}
+        update();
+      }
+
+      canvas.addEventListener("mousedown", (event) => {
+        clickX = Math.floor(event.offsetX/64);
+        clickY = Math.floor(event.offsetY/64);
+        if (clickX>=0 && clickY>=0 && clickX<4 && clickY<4) {
+          sprDat=toggleBit(sprDat,clickX+clickY*4);
+        }
+        update();
+      })
+      canvas.addEventListener("mousemove", (event) => {
+        if (event.buttons > 0 && (Math.floor(event.offsetX/64) != clickX || Math.floor(event.offsetY/64) != clickY)) {
+          clickX = Math.floor(event.offsetX/64);
+          clickY = Math.floor(event.offsetY/64);
+          if (clickX>=0 && clickY>=0 && clickX<4 && clickY<4) {
+            sprDat=toggleBit(sprDat,clickX+clickY*4);
+          }
+          update();
+        }
+      })
+
+      update()
+    </script>
+  </body>
+</html>
