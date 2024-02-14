@@ -1,2 +1,0 @@
-finish perlin chunk
-finish inputs
