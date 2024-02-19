@@ -9,9 +9,49 @@
       const canvas2d = document.getElementById("canvas2d");
       const ctx = canvas2d.getContext("2d");
 
-      ctx.fillStyle = "black";
-      ctx.fillRect(0, 0, canvas2d.width, canvas2d.height);
+      function strokeLine(x1, y1, x2, y2) {
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+      function graphPoint(x, y) {
+        ctx.fillRect(x-0.15, y-0.15, 0.3, 0.3);
+      }
+
+      function clear() {
+        ctx.resetTransform();
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, canvas2d.width, canvas2d.height);
+        ctx.lineWidth = 0.25;
+        //ctx.translate(canvas2d.width/2, canvas2d.height/2);
+        ctx.scale(25, 25);
+        ctx.strokeStyle = "midnightblue";
+        for (let i = 0; i <= canvas2d.width/25; i++) {
+          strokeLine(i, 0, i, canvas2d.height);
+        }
+        for (let i = 0; i <= canvas2d.height/25; i++) {
+          strokeLine(0, i, canvas2d.width, i);
+        }
+      }
       
+      function raycast(start, direction) {
+        ctx.strokeStyle = "red";
+        strokeLine(start.x, start.y, direction.x, direction.y);
+        let offset = {x: direction.x - start.x, y: direction.y - start.y};
+        let magnitude = Math.hypot(offset.x, offset.y);
+        let normalized = {x: offset.x / magnitude, y: offset.y / magnitude};
+        console.log(normalized);
+        ctx.strokeStyle = "blue";
+        strokeLine(start.x, start.y, start.x + normalized.x, start.y + normalized.y);
+        
+        ctx.fillStyle = "yellow";
+        graphPoint(start.x, start.y);
+      }
+
+      clear();
+      //raycast({x: 5, y: 5}, {x: 8, y: 10});
+      raycast({x: 5.5, y: 5.5}, {x: 8, y: 10});
     </script>
   </body>
 </html>
