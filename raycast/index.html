@@ -9,14 +9,20 @@
       const canvas2d = document.getElementById("canvas2d");
       const ctx = canvas2d.getContext("2d");
 
+      function ceilFloor(number, ceil) {return (ceil ? Math.ceil(number) : Math.floor(number))}
+
       function strokeLine(x1, y1, x2, y2) {
         ctx.beginPath();
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
         ctx.stroke();
       }
+
       function graphPoint(x, y) {
         ctx.fillRect(x-0.15, y-0.15, 0.3, 0.3);
+      }
+      function plotTile(x, y) {
+        ctx.fillRect(x, y, 1, 1);
       }
 
       function clear() {
@@ -41,17 +47,36 @@
         let offset = {x: direction.x - start.x, y: direction.y - start.y};
         let magnitude = Math.hypot(offset.x, offset.y);
         let normalized = {x: offset.x / magnitude, y: offset.y / magnitude};
-        console.log(normalized);
+        //console.log(normalized);
         ctx.strokeStyle = "blue";
         strokeLine(start.x, start.y, start.x + normalized.x, start.y + normalized.y);
         
-        ctx.fillStyle = "yellow";
-        graphPoint(start.x, start.y);
+        let slopes = {x: normalized.y / normalized.x, y: normalized.x / normalized.y};
+        let intersect = {x: start.y - slopes.x * start.x, y: start.x - slopes.y * start.y};
+
+        if (isFinite(slopes.x)) for (let i = 0; i < Math.abs(offset.x - (ceilFloor(start.x, offset.x > 0) - start.x)); i++) { //pesky less than 1 edge case
+        //if (isFinite(slopes.x)) for (let i = 0; i < Math.abs(ceilFloor(direction.x, offset.x > 0) - ceilFloor(start.x, offset.x > 0)); i++) { //worked, but long
+        //if (isFinite(slopes.x)) for (let i = 0; i < Math.abs(offset.x); i++) { //didn't work at floats
+          ctx.fillStyle = "yellow";
+          graphPoint(ceilFloor(start.x + i * Math.sign(offset.x), offset.x > 0), slopes.x * ceilFloor(start.x + i * Math.sign(offset.x), offset.x > 0) + intersect.x);
+          ctx.fillStyle = "lime";
+          plotTile(ceilFloor(start.x + i * Math.sign(offset.x), offset.x > 0)-(offset.x < 0), Math.floor(slopes.x * ceilFloor(start.x + i * Math.sign(offset.x), offset.x > 0) + intersect.x));
+          //plotTile(Math.floor(start.x + i * Math.sign(offset.x)), Math.floor(slopes.x * (start.x + i * Math.sign(offset.x)) + intersect.x));
+        }
+        //if (isFinite(slopes.y)) for (let i = Math.ceil(start.y); i < direction.y; i++) {
+        //  graphPoint(slopes.y * i + intersect.y, i);
+        //}
       }
 
       clear();
       //raycast({x: 5, y: 5}, {x: 8, y: 10});
       raycast({x: 5.5, y: 5.5}, {x: 8, y: 10});
+
+      canvas2d.addEventListener("mousemove", (e) => {
+        clear();
+        //raycast({x: 10, y: 10}, {x: e.offsetX/25, y: e.offsetY/25});
+        raycast({x: 10.5, y: 10.3}, {x: e.offsetX/25, y: e.offsetY/25});
+      })
     </script>
   </body>
 </html>
