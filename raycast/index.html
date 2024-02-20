@@ -41,6 +41,10 @@
         }
       }
       
+      function cfo(num, ceil) {
+        return num - ceilFloor(num, ceil)
+      }
+
       function raycast(start, direction) {
         ctx.strokeStyle = "red";
         strokeLine(start.x, start.y, direction.x, direction.y);
@@ -54,7 +58,8 @@
         let slopes = {x: normalized.y / normalized.x, y: normalized.x / normalized.y};
         let intersect = {x: start.y - slopes.x * start.x, y: start.x - slopes.y * start.y};
 
-        if (isFinite(slopes.x)) for (let i = 0; i < Math.abs(offset.x - (ceilFloor(start.x, offset.x > 0) - start.x)); i++) { //pesky less than 1 edge case
+        if (isFinite(slopes.x)) for (let i = 0; i < Math.abs(offset.x - cfo(start.x, offset.x < 0)); i++) { //pesky less than 1 edge case
+        //if (isFinite(slopes.x)) for (let i = 0; i < Math.abs(offset.x - (ceilFloor(start.x, offset.x > 0) - start.x)); i++) { //pesky less than 1 edge case
         //if (isFinite(slopes.x)) for (let i = 0; i < Math.abs(ceilFloor(direction.x, offset.x > 0) - ceilFloor(start.x, offset.x > 0)); i++) { //worked, but long
         //if (isFinite(slopes.x)) for (let i = 0; i < Math.abs(offset.x); i++) { //didn't work at floats
           ctx.fillStyle = "yellow";
