@@ -40,10 +40,6 @@
           strokeLine(0, i, canvas2d.width, i);
         }
       }
-      
-      function cfo(num, ceil) {
-        return num - ceilFloor(num, ceil)
-      }
 
       function raycast(start, direction) {
         ctx.strokeStyle = "red";
@@ -53,29 +49,40 @@
         let normalized = {x: offset.x / magnitude, y: offset.y / magnitude};
         //console.log(normalized);
         ctx.strokeStyle = "blue";
-        strokeLine(start.x, start.y, start.x + normalized.x, start.y + normalized.y);
+        //strokeLine(start.x, start.y, start.x + normalized.x, start.y + normalized.y);
         
         let slopes = {x: normalized.y / normalized.x, y: normalized.x / normalized.y};
         let intersect = {x: start.y - slopes.x * start.x, y: start.x - slopes.y * start.y};
 
-        if (isFinite(slopes.x)) for (let i = 0; i < Math.abs(offset.x - cfo(start.x, offset.x < 0)); i++) { //pesky less than 1 edge case
         //if (isFinite(slopes.x)) for (let i = 0; i < Math.abs(offset.x - (ceilFloor(start.x, offset.x > 0) - start.x)); i++) { //pesky less than 1 edge case
-        //if (isFinite(slopes.x)) for (let i = 0; i < Math.abs(ceilFloor(direction.x, offset.x > 0) - ceilFloor(start.x, offset.x > 0)); i++) { //worked, but long
-        //if (isFinite(slopes.x)) for (let i = 0; i < Math.abs(offset.x); i++) { //didn't work at floats
+        if (isFinite(slopes.x)) for (let i = 0; i < Math.abs(ceilFloor(direction.x, offset.x > 0) - ceilFloor(start.x, offset.x > 0)); i++) { //worked, but long
           ctx.fillStyle = "yellow";
           graphPoint(ceilFloor(start.x + i * Math.sign(offset.x), offset.x > 0), slopes.x * ceilFloor(start.x + i * Math.sign(offset.x), offset.x > 0) + intersect.x);
           ctx.fillStyle = "lime";
           plotTile(ceilFloor(start.x + i * Math.sign(offset.x), offset.x > 0)-(offset.x < 0), Math.floor(slopes.x * ceilFloor(start.x + i * Math.sign(offset.x), offset.x > 0) + intersect.x));
-          //plotTile(Math.floor(start.x + i * Math.sign(offset.x)), Math.floor(slopes.x * (start.x + i * Math.sign(offset.x)) + intersect.x));
+        }
+        if (isFinite(slopes.y)) for (let i = 0; i < Math.abs(ceilFloor(direction.y, offset.y > 0) - ceilFloor(start.y, offset.y > 0)); i++) { //worked, but long
+          ctx.fillStyle = "orange";
+          graphPoint(slopes.y * ceilFloor(start.y + i * Math.sign(offset.y), offset.y > 0) + intersect.y, ceilFloor(start.y + i * Math.sign(offset.y), offset.y > 0));
+          ctx.fillStyle = "cyan";
+          plotTile(Math.floor(slopes.y * ceilFloor(start.y + i * Math.sign(offset.y), offset.y > 0) + intersect.y), ceilFloor(start.y + i * Math.sign(offset.y), offset.y > 0)-(offset.y < 0));
         }
         //if (isFinite(slopes.y)) for (let i = Math.ceil(start.y); i < direction.y; i++) {
         //  graphPoint(slopes.y * i + intersect.y, i);
         //}
       }
 
-      clear();
+      //clear();
       //raycast({x: 5, y: 5}, {x: 8, y: 10});
-      raycast({x: 5.5, y: 5.5}, {x: 8, y: 10});
+      //raycast({x: 5.5, y: 5.5}, {x: 8, y: 10});
+
+      clear()
+      raycast({x: 10.5, y: 10}, {x: 12.5, y: 9})
+      raycast({x: 1, y: 1}, {x: 2, y: 3})
+      raycast({x: 6.3, y: 11}, {x: 6.7, y: 11})
+      raycast({x: 6.3, y: 13}, {x: 7, y: 13})
+      raycast({x: 6, y: 15}, {x: 6.5, y: 15})
+      raycast({x: 6, y: 17}, {x: 7, y: 17})
 
       canvas2d.addEventListener("mousemove", (e) => {
         clear();
