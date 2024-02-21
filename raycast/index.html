@@ -55,11 +55,12 @@
         let intersect = {x: start.y - slopes.x * start.x, y: start.x - slopes.y * start.y};
 
         //if (isFinite(slopes.x)) for (let i = 0; i < Math.abs(offset.x - (ceilFloor(start.x, offset.x > 0) - start.x)); i++) { //pesky less than 1 edge case
-        if (isFinite(slopes.x)) for (let i = 0; i < Math.abs(ceilFloor(direction.x, offset.x > 0) - ceilFloor(start.x, offset.x > 0)); i++) { //worked, but long
+        //if (isFinite(slopes.x)) for (let i = 0; i < Math.abs(ceilFloor(direction.x, offset.x > 0) - ceilFloor(start.x, offset.x > 0)); i++) { //worked, but long
+        /*if (isFinite(slopes.x)) for (let i = Math.ceil(start.x); i < direction.x; i++) {
           ctx.fillStyle = "yellow";
           graphPoint(ceilFloor(start.x + i * Math.sign(offset.x), offset.x > 0), slopes.x * ceilFloor(start.x + i * Math.sign(offset.x), offset.x > 0) + intersect.x);
-          ctx.fillStyle = "lime";
-          plotTile(ceilFloor(start.x + i * Math.sign(offset.x), offset.x > 0)-(offset.x < 0), Math.floor(slopes.x * ceilFloor(start.x + i * Math.sign(offset.x), offset.x > 0) + intersect.x));
+          //ctx.fillStyle = "lime";
+          //plotTile(ceilFloor(start.x + i * Math.sign(offset.x), offset.x > 0)-(offset.x < 0), Math.floor(slopes.x * ceilFloor(start.x + i * Math.sign(offset.x), offset.x > 0) + intersect.x));
         }
         if (isFinite(slopes.y)) for (let i = 0; i < Math.abs(ceilFloor(direction.y, offset.y > 0) - ceilFloor(start.y, offset.y > 0)); i++) { //worked, but long
           ctx.fillStyle = "orange";
@@ -67,9 +68,18 @@
           ctx.fillStyle = "cyan";
           plotTile(Math.floor(slopes.y * ceilFloor(start.y + i * Math.sign(offset.y), offset.y > 0) + intersect.y), ceilFloor(start.y + i * Math.sign(offset.y), offset.y > 0)-(offset.y < 0));
         }
-        //if (isFinite(slopes.y)) for (let i = Math.ceil(start.y); i < direction.y; i++) {
-        //  graphPoint(slopes.y * i + intersect.y, i);
-        //}
+
+        if (isFinite(slopes.y)) for (let i = Math.ceil(start.y); i < direction.y; i++) {
+          ctx.fillStyle = "yellow";
+          graphPoint(slopes.y * i + intersect.y, i);
+        }*/
+
+        let maxDist = 8;
+        let travelDist = {x: Math.hypot(1, slopes.x), y: Math.hypot(slopes.y, 1)};
+        console.log(travelDist)
+        for (let i = 0; i < 2 * maxDist; i++) {
+
+        }
       }
 
       //clear();
@@ -86,8 +96,8 @@
 
       canvas2d.addEventListener("mousemove", (e) => {
         clear();
-        //raycast({x: 10, y: 10}, {x: e.offsetX/25, y: e.offsetY/25});
-        raycast({x: 10.5, y: 10.3}, {x: e.offsetX/25, y: e.offsetY/25});
+        raycast({x: 10, y: 10}, {x: e.offsetX/25, y: e.offsetY/25});
+        // raycast({x: 10.5, y: 10.3}, {x: e.offsetX/25, y: e.offsetY/25});
       })
     </script>
   </body>
