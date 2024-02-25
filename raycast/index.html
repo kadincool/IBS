@@ -80,26 +80,22 @@
         console.log(travelDist)
         let totalTravel = 0;
         let travelled = {x: 0, y: 0};
+        let rayPos = {x: start.x, y: start.y}
         for (let i = 0; i < 2 * maxDist; i++) {
           //get least distance
-          //get x distance
-          let xDist = travelDist.x - (totalTravel - travelled.x * travelDist.x);
-          let yDist = travelDist.y - (totalTravel - travelled.y * travelDist.y);
-          console.log(xDist, yDist)
+          let off = {x: 1 - pmod(rayPos.x, 1), y: 1 - pmod(rayPos.y, 1)}
+          let xDist = Math.abs(off.x * travelDist.x);
+          let yDist = Math.abs(off.y * travelDist.y);
+          console.log(xDist, yDist);
           if (xDist <= yDist) {
-            console.log("x")
-            ctx.fillStyle = "yellow";
-            plotTile(travelled.x + start.x, Math.floor(slopes.x * (travelled.x + start.y) - intersect.x));
-            travelled.x += 1;
-            totalTravel = travelled.x * travelDist.x;
-          } else if (xDist >= yDist) {
-            console.log("y");
-            ctx.fillStyle = "green";
-            plotTile(Math.floor(slopes.y * (travelled.y + start.y) - intersect.y), travelled.y + start.x);
-            travelled.y += 1;
-            totalTravel = travelled.y * travelDist.y;
+            rayPos.x += off.x;
+            rayPos.y += slopes.x * off.x;
+          } else {
+            rayPos.y += off.y;
+            rayPos.x += slopes.y * off.y;
           }
-          if (totalTravel > maxDist) break;
+          ctx.fillStyle = "yellow"
+          plotTile(Math.floor(rayPos.x), Math.floor(rayPos.y))
           //travel along that axis
           //increment distance travelled
         }
@@ -111,8 +107,8 @@
 
       clear()
       // raycast({x: 10.5, y: 10}, {x: 12.5, y: 9})
-      //raycast({x: 1, y: 1}, {x: 2, y: 2})
-      raycast({x: 1, y: 1}, {x: 2, y: 3})
+      raycast({x: 1, y: 1}, {x: 2, y: 2})
+      //raycast({x: 1, y: 1}, {x: 2, y: 3})
       // raycast({x: 6.3, y: 11}, {x: 6.7, y: 11})
       // raycast({x: 6.3, y: 13}, {x: 7, y: 13})
       // raycast({x: 6, y: 15}, {x: 6.5, y: 15})
