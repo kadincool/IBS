@@ -89,13 +89,13 @@
           if (xDist <= yDist) {
             console.log("x")
             ctx.fillStyle = "yellow";
-            plotTile(travelled.x + start.x, Math.floor(slopes.x * travelled.x + intersect.x));
+            plotTile(travelled.x + start.x, Math.floor(slopes.x * (travelled.x + start.y) - intersect.x));
             travelled.x += 1;
             totalTravel = travelled.x * travelDist.x;
           } else if (xDist >= yDist) {
             console.log("y");
             ctx.fillStyle = "green";
-            plotTile(Math.floor(slopes.y * travelled.y + intersect.y), travelled.y + start.y);
+            plotTile(Math.floor(slopes.y * (travelled.y + start.y) - intersect.y), travelled.y + start.x);
             travelled.y += 1;
             totalTravel = travelled.y * travelDist.y;
           }
