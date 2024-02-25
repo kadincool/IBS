@@ -9,6 +9,7 @@
       const canvas2d = document.getElementById("canvas2d");
       const ctx = canvas2d.getContext("2d");
 
+      function pmod(a,b) {return (a%b+b)%b}
       function ceilFloor(number, ceil) {return (ceil ? Math.ceil(number) : Math.floor(number))}
 
       function strokeLine(x1, y1, x2, y2) {
@@ -77,8 +78,17 @@
         let maxDist = 8;
         let travelDist = {x: Math.hypot(1, slopes.x), y: Math.hypot(slopes.y, 1)};
         console.log(travelDist)
+        alert(JSON.stringify(travelDist));
+        let totalTravel = 0;
+        let travelled = {x: 0, y: 0};
         for (let i = 0; i < 2 * maxDist; i++) {
-
+          //get least distance
+          //get x distance
+          let xDist = pmod(start.x + slopes.x * totalTravel, travelDist.x);
+          alert(xDist);
+          totalTravel += 1;
+          //travel along that axis
+          //increment distance travelled
         }
       }
 
@@ -87,16 +97,17 @@
       //raycast({x: 5.5, y: 5.5}, {x: 8, y: 10});
 
       clear()
-      raycast({x: 10.5, y: 10}, {x: 12.5, y: 9})
-      raycast({x: 1, y: 1}, {x: 2, y: 3})
-      raycast({x: 6.3, y: 11}, {x: 6.7, y: 11})
-      raycast({x: 6.3, y: 13}, {x: 7, y: 13})
-      raycast({x: 6, y: 15}, {x: 6.5, y: 15})
-      raycast({x: 6, y: 17}, {x: 7, y: 17})
+      // raycast({x: 10.5, y: 10}, {x: 12.5, y: 9})
+      raycast({x: 1, y: 1}, {x: 2, y: 2})
+      // raycast({x: 1, y: 1}, {x: 2, y: 3})
+      // raycast({x: 6.3, y: 11}, {x: 6.7, y: 11})
+      // raycast({x: 6.3, y: 13}, {x: 7, y: 13})
+      // raycast({x: 6, y: 15}, {x: 6.5, y: 15})
+      // raycast({x: 6, y: 17}, {x: 7, y: 17})
 
       canvas2d.addEventListener("mousemove", (e) => {
-        clear();
-        raycast({x: 10, y: 10}, {x: e.offsetX/25, y: e.offsetY/25});
+        //clear();
+        //raycast({x: 10, y: 10}, {x: e.offsetX/25, y: e.offsetY/25});
         // raycast({x: 10.5, y: 10.3}, {x: e.offsetX/25, y: e.offsetY/25});
       })
     </script>
