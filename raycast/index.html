@@ -64,20 +64,22 @@
         let rayPos = {x: start.x, y: start.y};
         for (let i = 0; i < 2 * maxDist; i++) {
           //get least distance
-          let off = {x: flip(pmod(rayPos.x, 1), offset.x > 0), y: flip(pmod(rayPos.y, 1), offset.y > 0)};
-          let xDist = Math.abs(off.x * travelDist.x);
-          let yDist = Math.abs(off.y * travelDist.y);
+          let off = {x: pmod(flip(rayPos.x, offset.x > 0), 1), y: pmod(flip(rayPos.y, offset.y > 0), 1)};
+          console.log(off);
+
+          //let xDist = Math.abs(off.x * travelDist.x);
+          //let yDist = Math.abs(off.y * travelDist.y);
           //console.log(xDist, yDist);
           //console.log(off.x)
-          if (xDist <= yDist) {
-            rayPos.x += off.x;// * Math.sign(offset.x);
-            rayPos.y += slopes.x * off.x;// * Math.sign(offset.x);
-          } else {
-            rayPos.y += off.y;// * Math.sign(offset.y);
-            rayPos.x += slopes.y * off.y;// * Math.sign(offset.y);
-          }
-          ctx.fillStyle = "yellow"
-          plotTile(Math.floor(rayPos.x), Math.floor(rayPos.y))
+          // if (xDist <= yDist) {
+          //   rayPos.x += off.x;// * Math.sign(offset.x);
+          //   rayPos.y += slopes.x * off.x;// * Math.sign(offset.x);
+          // } else {
+          //   rayPos.y += off.y;// * Math.sign(offset.y);
+          //   rayPos.x += slopes.y * off.y;// * Math.sign(offset.y);
+          // }
+          // ctx.fillStyle = "yellow"
+          // plotTile(Math.floor(rayPos.x), Math.floor(rayPos.y))
           //travel along that axis
           //increment distance travelled
         }
