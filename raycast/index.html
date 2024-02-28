@@ -64,7 +64,7 @@
         let rayPos = {x: start.x, y: start.y};
         for (let i = 0; i < 2 * maxDist; i++) {
           //get least distance
-          let off = {x: pmod(flip(rayPos.x, offset.x > 0), 1), y: pmod(flip(rayPos.y, offset.y > 0), 1)};
+          let off = {x: pmod(rayPos.x, 1), y: pmod(rayPos.y, 1)};
           console.log(off);
 
           //let xDist = Math.abs(off.x * travelDist.x);
