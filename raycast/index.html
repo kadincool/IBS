@@ -43,6 +43,10 @@
         }
       }
 
+      function checkTile(x, y) {
+        return y < 3;
+      }
+
       function raycast(start, direction) {
         ctx.strokeStyle = "red";
         strokeLine(start.x, start.y, direction.x, direction.y);
@@ -65,7 +69,7 @@
         for (let i = 0; i < 2 * maxDist; i++) {
           //get least distance
           let off = {x: 1 - pmod(flip(rayPos.x, offset.x < 0), 1), y: 1 - pmod(flip(rayPos.y, offset.y < 0), 1)};
-          console.log(off);
+          //console.log(off);
 
           let xDist = Math.abs(off.x * travelDist.x);
           let yDist = Math.abs(off.y * travelDist.y);
@@ -78,18 +82,28 @@
             rayPos.y += off.y * Math.sign(offset.y);
             rayPos.x += slopes.y * off.y * Math.sign(offset.y);
           }
-          ctx.fillStyle = "yellow"
-          plotTile(Math.floor(rayPos.x) - (offset.x < 0 && pmod(rayPos.x, 1) == 0), Math.floor(rayPos.y) - (offset.y < 0 && pmod(rayPos.y, 1) == 0))
+          let tileAt = {x: Math.floor(rayPos.x) - (offset.x < 0 && pmod(rayPos.x, 1) == 0),y: Math.floor(rayPos.y) - (offset.y < 0 && pmod(rayPos.y, 1) == 0)}
+          //ctx.fillStyle = "yellow"
+          //plotTile(tileAt.x, tileAt.y);
+          if (Math.hypot(rayPos.x - start.x, rayPos.y - start.y) > maxDist) {
+            return maxDist;
+          }
+          if (checkTile(tileAt.x, tileAt.y)) {
+            ctx.fillStyle = "white"
+            plotTile(tileAt.x, tileAt.y);
+            return Math.hypot(rayPos.x - start.x, rayPos.y - start.y);
+          }
           //travel along that axis
           //increment distance travelled
         }
+        return Math.hypot(rayPos.x - start.x, rayPos.y - start.y);
       }
 
       //clear();
       //raycast({x: 5, y: 5}, {x: 8, y: 10});
       //raycast({x: 5.5, y: 5.5}, {x: 8, y: 10});
 
-      clear()
+      //clear()
       // raycast({x: 10.5, y: 10}, {x: 12.5, y: 9})
       raycast({x: 1, y: 1}, {x: 2, y: 2})
       //raycast({x: 1, y: 1}, {x: 2, y: 3})
@@ -100,7 +114,7 @@
 
       canvas2d.addEventListener("mousemove", (e) => {
         clear();
-        raycast({x: 10, y: 10}, {x: e.offsetX/25, y: e.offsetY/25});
+        console.log(raycast({x: 10, y: 10}, {x: e.offsetX/25, y: e.offsetY/25}));
         // raycast({x: 10.5, y: 10.3}, {x: e.offsetX/25, y: e.offsetY/25});
       })
     </script>
