@@ -50,12 +50,13 @@
       function raycast(start, direction) {
         ctx.strokeStyle = "red";
         strokeLine(start.x, start.y, direction.x, direction.y);
+        
         let offset = {x: direction.x - start.x, y: direction.y - start.y, z: direction.z - start.z};
         let magnitude = Math.hypot(offset.x, offset.y, offset.x);
         let normalized = {x: offset.x / magnitude, y: offset.y / magnitude, z: offset.z / magnitude};
         
         let slopes = {x: [normalized.y / normalized.x, normalized.z / normalized.x], y: [normalized.x / normalized.y, normalized.z / normalized.y], z: [normalized.x / normalized.z, normalized.y / normalized.z]};
-        const maxDist = 12;
+        const maxDist = 128;
         const travelDist = {
           x: Math.hypot(1, slopes.x[0], slopes.x[1]),
           y: Math.hypot(1, slopes.y[0], slopes.y[1]),
@@ -63,6 +64,10 @@
         };
         let rayPos = {x: start.x, y: start.y, z: start.z};
         for (let i = 0; i < 2 * maxDist; i++) {
+          let tileAt = {x: Math.floor(rayPos.x) - (offset.x < 0 && pmod(rayPos.x, 1) == 0),y: Math.floor(rayPos.y) - (offset.y < 0 && pmod(rayPos.y, 1) == 0)}
+          ctx.fillStyle = "yellow";
+          plotTile(tileAt.x, tileAt.y);
+
           let off = {
             x: ceilFloor(rayPos.x + Math.sign(offset.x), offset.x < 0)-rayPos.x,
             y: ceilFloor(rayPos.y + Math.sign(offset.y), offset.y < 0)-rayPos.y,
@@ -73,6 +78,10 @@
             y: Math.abs(off.y * travelDist.y),
             z: Math.abs(off.z * travelDist.z)
           };
+          if (isNaN(dist.x)) dist.x = Infinity;
+          if (isNaN(dist.y)) dist.y = Infinity;
+          if (isNaN(dist.z)) dist.z = Infinity;
+
           if (dist.x <= dist.y && dist.x <= dist.z) {
             rayPos.x += off.x;
             rayPos.y += slopes.x[0] * off.x;
@@ -82,12 +91,13 @@
             rayPos.y += off.y;
             rayPos.z += slopes.y[1] * off.y;
           } else {
-
+            rayPos.x += slopes.z[0] * off.z;
+            rayPos.y += slopes.z[1] * off.z;
+            rayPos.z += off.z;
           }
-          let tileAt = {x: Math.floor(rayPos.x) - (offset.x < 0 && pmod(rayPos.x, 1) == 0),y: Math.floor(rayPos.y) - (offset.y < 0 && pmod(rayPos.y, 1) == 0)}
-          ctx.fillStyle = "yellow"
-          plotTile(tileAt.x, tileAt.y);
-          console.log(off);
+          if (Math.hypot(rayPos.x - start.x, rayPos.y - start.y, rayPos.z - start.z) > maxDist) {
+            return maxDist;
+          }
         }
 
         /*let intersect = {x: start.y - slopes.x * start.x, y: start.x - slopes.y * start.y};
