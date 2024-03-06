@@ -13,6 +13,11 @@
       function ceilFloor(number, ceil) {return (ceil ? Math.ceil(number) : Math.floor(number))}
       function flip(a, flip) {return (flip ? 1 - a : a)}
 
+      const scale = 4;
+      const castDist = 4;
+
+      var camPos = {x: 0, y: 0, z: 0}
+
       function strokeLine(x1, y1, x2, y2) {
         ctx.beginPath();
         ctx.moveTo(x1, y1);
@@ -30,33 +35,36 @@
       function clear() {
         ctx.resetTransform();
         ctx.fillStyle = "black";
+        ctx.globalAlpha = 1;
         ctx.fillRect(0, 0, canvas2d.width, canvas2d.height);
         ctx.lineWidth = 0.25;
         //ctx.translate(canvas2d.width/2, canvas2d.height/2);
-        ctx.scale(25, 25);
-        ctx.strokeStyle = "midnightblue";
-        for (let i = 0; i <= canvas2d.width/25; i++) {
-          strokeLine(i, 0, i, canvas2d.height);
-        }
-        for (let i = 0; i <= canvas2d.height/25; i++) {
-          strokeLine(0, i, canvas2d.width, i);
-        }
+        ctx.scale(scale, scale);
+        // ctx.strokeStyle = "midnightblue";
+        // for (let i = 0; i <= canvas2d.width/scale; i++) {
+        //   strokeLine(i, 0, i, canvas2d.height);
+        // }
+        // for (let i = 0; i <= canvas2d.height/scale; i++) {
+        //   strokeLine(0, i, canvas2d.width, i);
+        // }
       }
 
-      function checkTile(x, y) {
-        return y < 3;
+      function checkTile(x, y, z) {
+        //console.log(x, y, z)
+        // return y < x/2-8-z;
+        return x==1 && y==0 && z==1;
       }
 
       function raycast(start, direction) {
-        ctx.strokeStyle = "red";
-        strokeLine(start.x, start.y, direction.x, direction.y);
+        //ctx.strokeStyle = "red";
+        //strokeLine(start.x, start.y, direction.x, direction.y);
         
         let offset = {x: direction.x - start.x, y: direction.y - start.y, z: direction.z - start.z};
-        let magnitude = Math.hypot(offset.x, offset.y, offset.x);
+        let magnitude = Math.hypot(offset.x, offset.y, offset.z);
         let normalized = {x: offset.x / magnitude, y: offset.y / magnitude, z: offset.z / magnitude};
         
         let slopes = {x: [normalized.y / normalized.x, normalized.z / normalized.x], y: [normalized.x / normalized.y, normalized.z / normalized.y], z: [normalized.x / normalized.z, normalized.y / normalized.z]};
-        const maxDist = 128;
+        const maxDist = castDist;
         const travelDist = {
           x: Math.hypot(1, slopes.x[0], slopes.x[1]),
           y: Math.hypot(1, slopes.y[0], slopes.y[1]),
@@ -64,9 +72,12 @@
         };
         let rayPos = {x: start.x, y: start.y, z: start.z};
         for (let i = 0; i < 2 * maxDist; i++) {
-          let tileAt = {x: Math.floor(rayPos.x) - (offset.x < 0 && pmod(rayPos.x, 1) == 0),y: Math.floor(rayPos.y) - (offset.y < 0 && pmod(rayPos.y, 1) == 0)}
-          ctx.fillStyle = "yellow";
-          plotTile(tileAt.x, tileAt.y);
+          let tileAt = {x: Math.floor(rayPos.x) - (offset.x < 0 && pmod(rayPos.x, 1) == 0), y: Math.floor(rayPos.y) - (offset.y < 0 && pmod(rayPos.y, 1) == 0), z: Math.floor(rayPos.z) - (offset.z < 0 && pmod(rayPos.z, 1) == 0)}
+          // ctx.fillStyle = "yellow";
+          // plotTile(tileAt.x, tileAt.y);
+          if (checkTile(tileAt.x, tileAt.y, tileAt.z)) {
+            return Math.hypot(rayPos.x - start.x, rayPos.y - start.y, rayPos.z - start.z);
+          }
 
           let off = {
             x: ceilFloor(rayPos.x + Math.sign(offset.x), offset.x < 0)-rayPos.x,
@@ -95,6 +106,7 @@
             rayPos.y += slopes.z[1] * off.z;
             rayPos.z += off.z;
           }
+          // console.log(rayPos);
           if (Math.hypot(rayPos.x - start.x, rayPos.y - start.y, rayPos.z - start.z) > maxDist) {
             return maxDist;
           }
@@ -144,21 +156,61 @@
       //clear();
       //raycast({x: 5, y: 5}, {x: 8, y: 10});
       //raycast({x: 5.5, y: 5.5}, {x: 8, y: 10});
-
-      clear()
-      // raycast({x: 10.5, y: 10}, {x: 12.5, y: 9})
-      raycast({x: 1, y: 1, z: 1}, {x: 2, y: 2, z: 1})
+      function frame() {
+        clear();
+        //raycast({x: 10.5, y: 10}, {x: 12.5, y: 9})
+        const vWid = canvas2d.width / scale;
+        const vHei = canvas2d.height / scale
+        for (let i = 0; i < vWid; i++) {
+          for (let j = 0; j < vHei; j++) {
+            let uv = {x: i-vWid/2, y: j-vHei/2};
+            ctx.fillStyle = "white";
+            let cast = raycast(camPos, {x: camPos.x + uv.x, y: camPos.y + uv.y, z: camPos.z + 25});
+            // let cast = raycast(camPos, {x: camPos.x + uv.x + 1, y: camPos.y + uv.y, z: camPos.z + uv.x + 1});
+            //console.log(cast);
+            ctx.globalAlpha = Math.max((castDist - cast)/castDist, 0);
+            plotTile(i, j)
+          }
+        }
+        //camPos.x+=0.1;
+        //requestAnimationFrame(frame);
+      }
+      frame();
+      document.addEventListener("keydown", (e) => {
+        switch(e.code) {
+          case ("KeyW"):
+            camPos.z+=0.1;
+            break;
+          case("KeyS"):
+            camPos.z-=0.1;
+            break;
+          case("KeyD"):
+            camPos.x+=0.1;
+            break;
+          case("KeyA"):
+            camPos.x-=0.1;
+            break;
+          case("KeyQ"):
+            camPos.y+=0.1;
+            break;
+          case("KeyE"):
+            camPos.y-=0.1;
+            break;
+        }
+        frame()
+      })
+      //console.log(raycast({x: 1, y: 1, z: 1}, {x: 2, y: 2, z: 3}))
       //raycast({x: 1, y: 1}, {x: 2, y: 3})
       // raycast({x: 6.3, y: 11}, {x: 6.7, y: 11})
       // raycast({x: 6.3, y: 13}, {x: 7, y: 13})
       // raycast({x: 6, y: 15}, {x: 6.5, y: 15})
       // raycast({x: 6, y: 17}, {x: 7, y: 17})
 
-      canvas2d.addEventListener("mousemove", (e) => {
-        clear();
-        //console.log(raycast({x: 10.3, y: 10.3, z: 0}, {x: e.offsetX/25, y: e.offsetY/25, z: 0}));
-        console.log(raycast({x: 10, y: 10, z: 0}, {x: e.offsetX/25, y: e.offsetY/25, z: 0}));
-      })
+      // canvas2d.addEventListener("mousemove", (e) => {
+      //   clear();
+      //   //console.log(raycast({x: 10.3, y: 10.3, z: 0}, {x: e.offsetX/25, y: e.offsetY/25, z: 0}));
+      //   console.log(raycast({x: 10, y: 10, z: 0}, {x: e.offsetX/25, y: e.offsetY/25, z: 0}));
+      // })
     </script>
   </body>
 </html>
