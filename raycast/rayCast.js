@@ -6,15 +6,15 @@ const canvasgl = document.getElementById("canvasgl");
 const gl = canvasgl.getContext("webgl");
 
 const vShader = `
+attribute vec4 position;
 void main() {
-  gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
+  gl_Position = position;
 
   gl_PointSize = 10.0;
 }
 `;
 
 const fShader = `
-precision mediump float;
 void main() {
   gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }
@@ -40,6 +40,22 @@ console.log("Vertex Shader:", gl.getShaderInfoLog(vs));
 console.log("Fragment Shader:", gl.getShaderInfoLog(fs));
 console.log("Program:", gl.getProgramInfoLog(program));
 
+//make 2 triangles that fill up the screen
+var position = gl.getAttribLocation(program, "position"); //get point shader value
+var vertices = new Float32Array([ //positons to make 2 triangles in oppisite corners
+  -1, -1,
+  -1, 1,
+  1, -1,
+  -1, 1,
+  1, -1,
+  1, 1
+]);
+var posBuffer = gl.createBuffer(); //make a buffer to feed in the verticies
+gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer); //make the posBuffer use the array buffer
+gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW); //feed the vertices into the array buffer
+gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0); //points the buffer as vector2 floats that are un-normalized with auto stride and offset
+gl.enableVertexAttribArray(posBuffer); //enables the array
+
 //set clear color
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
@@ -47,8 +63,9 @@ gl.clearColor(0.0, 0.0, 0.0, 1.0);
 gl.clear(gl.COLOR_BUFFER_BIT);
 
 //drawPoints
-gl.drawArrays(gl.POINTS, 0, 1);
+gl.drawArrays(gl.TRIANGLES, 0, 6);
 
+//canvas2d
 function pmod(a,b) {return (a%b+b)%b}
 function ceilFloor(number, ceil) {return (ceil ? Math.ceil(number) : Math.floor(number))}
 function flip(a, flip) {return (flip ? 1 - a : a)}
