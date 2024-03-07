@@ -3,22 +3,51 @@ const canvas2d = document.getElementById("canvas2d");
 const ctx = canvas2d.getContext("2d");
 
 const canvasgl = document.getElementById("canvasgl");
-const gl = canvas2d.getContext("webgl");
+const gl = canvasgl.getContext("webgl");
 
 const vShader = `
 void main() {
-gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
+  gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
 
-gl_PointSize = 10.0;
+  gl_PointSize = 10.0;
 }
 `;
 
 const fShader = `
 precision mediump float;
 void main() {
-gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+  gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }
 `;
+//make compiled versions of the shader
+const vs = gl.createShader(gl.VERTEX_SHADER);
+gl.shaderSource(vs, vShader);
+gl.compileShader(vs);
+
+const fs = gl.createShader(gl.FRAGMENT_SHADER);
+gl.shaderSource(fs, fShader);
+gl.compileShader(fs);
+
+//link shaders to program
+const program = gl.createProgram();
+gl.attachShader(program, vs);
+gl.attachShader(program, fs);
+gl.linkProgram(program);
+gl.useProgram(program);
+
+//log errors
+console.log("Vertex Shader:", gl.getShaderInfoLog(vs));
+console.log("Fragment Shader:", gl.getShaderInfoLog(fs));
+console.log("Program:", gl.getProgramInfoLog(program));
+
+//set clear color
+gl.clearColor(0.0, 0.0, 0.0, 1.0);
+
+//clear
+gl.clear(gl.COLOR_BUFFER_BIT);
+
+//drawPoints
+gl.drawArrays(gl.POINTS, 0, 1);
 
 function pmod(a,b) {return (a%b+b)%b}
 function ceilFloor(number, ceil) {return (ceil ? Math.ceil(number) : Math.floor(number))}
