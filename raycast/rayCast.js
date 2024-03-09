@@ -41,6 +41,11 @@ float serp2d(float v1, float v2, float v3, float v4, vec2 pos) {
 float serp3d(float v1, float v2, float v3, float v4, float v5, float v6, float v7, float v8, vec3 pos) {
   return serp(serp(serp(v1, v2, pos.x), serp(v3, v4, pos.x), pos.y), serp(serp(v5, v6, pos.x), serp(v7, v8, pos.x), pos.y), pos.z);
 }
+
+bool checkTile(vec3 pos) {
+  return pos == vec3(0, 0, 0);
+}
+
 vec4 raycast(vec3 start, vec3 end) {
   vec3 offset = end - start;
   mat3 slopes = mat3(
@@ -54,16 +59,25 @@ vec4 raycast(vec3 start, vec3 end) {
     length(slopes[2])
   );
   vec3 rayPos = start;
-  const int twoRayDist = int(2 * rayDist);
-  for (int i=0; i<twoRayDist; i++) {
-    
+  for (int i=0; i<256; i++) {
+    vec3 tileAt = vec3(
+      floor(rayPos.x) - float(offset.x < 0.0 && fract(rayPos.x)==0.0),
+      floor(rayPos.y) - float(offset.y < 0.0 && fract(rayPos.y)==0.0),
+      floor(rayPos.z) - float(offset.z < 0.0 && fract(rayPos.z)==0.0)
+    );
+    if (checkTile(tileAt)) {
+      return vec4(rayPos, distance(start, rayPos));
+    }
+    vec3 dist = vec3(abs(off * travelDist));
+    int travelAxis = 0;
+    //if (off.x != 0.0 && dist.x < )
   }
   return vec4(rayPos, distance(start, rayPos));
 }
 
 void main() {
   vec2 uv = (gl_FragCoord.xy * 2.0 - screenSize) / screenSize;
-  gl_FragColor = vec4(hash(0.0, vec3(uv, 0.0)), 0.0, 0.0, 1.0);
+  gl_FragColor = vec4(hash(0.0, vec3(uv, 0.0)), hash(1.0, vec3(uv, 0.0)), hash(2.0, vec3(uv, 0.0)), 1.0);
 }
 `;
 //make compiled versions of the shader
@@ -92,7 +106,7 @@ var screenSize = gl.getUniformLocation(program, "screenSize");
 gl.uniform2f(screenSize, canvasgl.width, canvasgl.height);
 
 //get and set rayDist
-var rayDist = gl.getUniformLocation(program, "screenSize");
+var rayDist = gl.getUniformLocation(program, "rayDist");
 gl.uniform1i(rayDist, 128);
 
 //make 2 triangles that fill up the screen
