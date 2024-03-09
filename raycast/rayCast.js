@@ -69,8 +69,23 @@ vec4 raycast(vec3 start, vec3 end) {
       return vec4(rayPos, distance(start, rayPos));
     }
     vec3 dist = vec3(abs(offset * travelDist));
-    int travelAxis = 0;
-    //if (offset.x != 0.0 && dist.x < )
+    int travelAxis = -1;
+    float axisTravelDist = 1.0/0.0; //set to Infinity
+    if (offset.x != 0.0 && dist.x < axisTravelDist) {
+      travelAxis = 0;
+    }
+    if (offset.y != 0.0 && dist.y < axisTravelDist) {
+      travelAxis = 1;
+    }
+    if (offset.z != 0.0 && dist.z < axisTravelDist) {
+      travelAxis = 2;
+    }
+    if (travelAxis >= 0) {
+      //rayPos += slopes[travelAxis] *
+    }
+    // if (travelAxis == 1) {
+    //   rayPos += slopes[0] * offset.x;
+    // } else if (travelAxis == 2)
   }
   return vec4(rayPos, distance(start, rayPos));
 }
