@@ -68,9 +68,9 @@ vec4 raycast(vec3 start, vec3 end) {
     if (checkTile(tileAt)) {
       return vec4(rayPos, distance(start, rayPos));
     }
-    vec3 dist = vec3(abs(off * travelDist));
+    vec3 dist = vec3(abs(offset * travelDist));
     int travelAxis = 0;
-    //if (off.x != 0.0 && dist.x < )
+    //if (offset.x != 0.0 && dist.x < )
   }
   return vec4(rayPos, distance(start, rayPos));
 }
