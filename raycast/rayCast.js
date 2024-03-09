@@ -87,7 +87,7 @@ vec4 raycast(vec3 start, vec3 end) {
     } else if (travelAxis == 2) {
       rayPos += slopes[2] * offset.z;
     }
-    if (distance(start, rayPos) > rayDist) {
+    if (distance(start, rayPos) > float(rayDist)) {
       return vec4(vec3(0.0, 0.0, 0.0), rayDist);
     }
   }
@@ -95,8 +95,9 @@ vec4 raycast(vec3 start, vec3 end) {
 }
 
 void main() {
-  vec2 uv = (gl_FragCoord.xy * 2.0 - screenSize) / screenSize;
-  gl_FragColor = vec4(hash(0.0, vec3(uv, 0.0)), hash(1.0, vec3(uv, 0.0)), hash(2.0, vec3(uv, 0.0)), 1.0);
+  vec2 uv = (gl_FragCoord.xy * 2.0 - screenSize) / screenSize / 2.0;
+  vec3 camPos = vec3(0.0, 0.0, 1.0);
+  gl_FragColor = vec4(raycast(camPos, vec3(uv, 1.0)+camPos).www/float(rayDist), 1.0);
 }
 `;
 //make compiled versions of the shader
@@ -126,7 +127,7 @@ gl.uniform2f(screenSize, canvasgl.width, canvasgl.height);
 
 //get and set rayDist
 var rayDist = gl.getUniformLocation(program, "rayDist");
-gl.uniform1i(rayDist, 128);
+gl.uniform1i(rayDist, 8);
 
 //make 2 triangles that fill up the screen
 var position = gl.getAttribLocation(program, "position"); //get point shader value
@@ -159,7 +160,7 @@ function ceilFloor(number, ceil) {return (ceil ? Math.ceil(number) : Math.floor(
 function flip(a, flip) {return (flip ? 1 - a : a)}
 
 const scale = 10;
-const castDist = 16;
+const castDist = 8;
 
 var camPos = {x: 0, y: 0, z: 0}
 
@@ -234,7 +235,7 @@ function checkTile(x, y, z) {
   //return y < x/2-8-z; //sloped terrain
   //return y==0 && z==1;//X pole
   //return x==0 && z==1;//Y pole
-  // return x==1 && y==0;//Z pole
+  //return x==1 && y==0;//Z pole
   return x==0 && y==0 && z==1; //block
   //return perlin3d(x, y, z, 0, 3, 5) > 0.7;
 }
