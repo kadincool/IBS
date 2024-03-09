@@ -43,7 +43,7 @@ float serp3d(float v1, float v2, float v3, float v4, float v5, float v6, float v
 }
 
 bool checkTile(vec3 pos) {
-  return pos == vec3(0, 0, 0);
+  return pos == vec3(0, 0, 1);
 }
 
 vec4 raycast(vec3 start, vec3 end) {
@@ -80,12 +80,16 @@ vec4 raycast(vec3 start, vec3 end) {
     if (offset.z != 0.0 && dist.z < axisTravelDist) {
       travelAxis = 2;
     }
-    if (travelAxis >= 0) {
-      //rayPos += slopes[travelAxis] *
+    if (travelAxis == 0) {
+      rayPos += slopes[0] * offset.x;
+    } else if (travelAxis == 1) {
+      rayPos += slopes[1] * offset.y;
+    } else if (travelAxis == 2) {
+      rayPos += slopes[2] * offset.z;
     }
-    // if (travelAxis == 1) {
-    //   rayPos += slopes[0] * offset.x;
-    // } else if (travelAxis == 2)
+    if (distance(start, rayPos) > rayDist) {
+      return vec4(vec3(0.0, 0.0, 0.0), rayDist);
+    }
   }
   return vec4(rayPos, distance(start, rayPos));
 }
@@ -231,8 +235,8 @@ function checkTile(x, y, z) {
   //return y==0 && z==1;//X pole
   //return x==0 && z==1;//Y pole
   // return x==1 && y==0;//Z pole
-  // return x==0 && y==0 && z==1; //block
-  return perlin3d(x, y, z, 0, 3, 5) > 0.7;
+  return x==0 && y==0 && z==1; //block
+  //return perlin3d(x, y, z, 0, 3, 5) > 0.7;
 }
 
 function raycast(start, direction) {
