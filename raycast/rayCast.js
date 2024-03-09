@@ -15,8 +15,55 @@ void main() {
 `;
 
 const fShader = `
+#define PI 3.1415926535897932384626433832795
+precision mediump float;
+uniform vec2 screenSize;
+uniform int rayDist;
+
+float halfHash(float value) {
+  return fract(sin(value * 1024.0));
+}
+
+float hash(float seed, vec3 pos) {
+  float value = 0.0;
+  value = halfHash(pos.x + seed);
+  value = halfHash(value + pos.y + seed);
+  value = halfHash(value + pos.z + seed);
+  return value;
+}
+
+float serp(float v1, float v2, float pos) {
+  return (sin((pos-0.5)*PI)/2.0+0.5)*(v2-v1)+v1;
+}
+float serp2d(float v1, float v2, float v3, float v4, vec2 pos) {
+  return serp(serp(v1, v2, pos.x), serp(v3, v4, pos.x), pos.y);
+}
+float serp3d(float v1, float v2, float v3, float v4, float v5, float v6, float v7, float v8, vec3 pos) {
+  return serp(serp(serp(v1, v2, pos.x), serp(v3, v4, pos.x), pos.y), serp(serp(v5, v6, pos.x), serp(v7, v8, pos.x), pos.y), pos.z);
+}
+vec4 raycast(vec3 start, vec3 end) {
+  vec3 offset = end - start;
+  mat3 slopes = mat3(
+    offset.x / offset.x, offset.y / offset.x, offset.z / offset.x,
+    offset.x / offset.y, offset.y / offset.y, offset.z / offset.y,
+    offset.x / offset.z, offset.y / offset.z, offset.z / offset.z
+  );
+  vec3 travelDist = vec3(
+    length(slopes[0]),
+    length(slopes[1]),
+    length(slopes[2])
+  );
+  vec3 rayPos = start;
+  const int twoRayDist = int(2 * rayDist);
+  for (int i=0; i<twoRayDist; i++) {
+    
+  }
+  return vec4(rayPos, distance(start, rayPos));
+}
+
 void main() {
-  gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+  vec2 uv = (gl_FragCoord.xy * 2.0 - screenSize) / screenSize;
+  gl_FragColor = vec4(hash(0.0, vec3(uv, 0.0)), 0.0, 0.0, 1.0);
 }
 `;
 //make compiled versions of the shader
@@ -39,6 +86,14 @@ gl.useProgram(program);
 console.log("Vertex Shader:", gl.getShaderInfoLog(vs));
 console.log("Fragment Shader:", gl.getShaderInfoLog(fs));
 console.log("Program:", gl.getProgramInfoLog(program));
+
+//get and set screenSize uniform
+var screenSize = gl.getUniformLocation(program, "screenSize");
+gl.uniform2f(screenSize, canvasgl.width, canvasgl.height);
+
+//get and set rayDist
+var rayDist = gl.getUniformLocation(program, "screenSize");
+gl.uniform1i(rayDist, 128);
 
 //make 2 triangles that fill up the screen
 var position = gl.getAttribLocation(program, "position"); //get point shader value
