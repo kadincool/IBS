@@ -1,8 +1,10 @@
 
-const canvas2d = document.getElementById("canvas2d");
-const ctx = canvas2d.getContext("2d");
+// const canvas2d = document.getElementById("canvas2d");
+// const ctx = canvas2d.getContext("2d");
 
 const canvasgl = document.getElementById("canvasgl");
+canvasgl.width = window.innerWidth;
+canvasgl.height = window.innerHeight;
 const gl = canvasgl.getContext("webgl");
 
 const vShader = `
@@ -49,10 +51,40 @@ float serp3d(float v1, float v2, float v3, float v4, float v5, float v6, float v
   return serp(serp(serp(v1, v2, pos.x), serp(v3, v4, pos.x), pos.y), serp(serp(v5, v6, pos.x), serp(v7, v8, pos.x), pos.y), pos.z);
 }
 
+float perlinStep3d(vec3 pos, float seed, float scale) {
+  return serp3d(
+    hash(seed, vec3(floor(pos.x/scale)*scale, floor(pos.y/scale)*scale, floor(pos.z/scale)*scale)),
+    hash(seed, vec3(ceil(pos.x/scale)*scale, floor(pos.y/scale)*scale, floor(pos.z/scale)*scale)),
+    hash(seed, vec3(floor(pos.x/scale)*scale, ceil(pos.y/scale)*scale, floor(pos.z/scale)*scale)),
+    hash(seed, vec3(ceil(pos.x/scale)*scale, ceil(pos.y/scale)*scale, floor(pos.z/scale)*scale)),
+    hash(seed, vec3(floor(pos.x/scale)*scale, floor(pos.y/scale)*scale, ceil(pos.z/scale)*scale)),
+    hash(seed, vec3(ceil(pos.x/scale)*scale, floor(pos.y/scale)*scale, ceil(pos.z/scale)*scale)),
+    hash(seed, vec3(floor(pos.x/scale)*scale, ceil(pos.y/scale)*scale, ceil(pos.z/scale)*scale)),
+    hash(seed, vec3(ceil(pos.x/scale)*scale, ceil(pos.y/scale)*scale, ceil(pos.z/scale)*scale)),
+    vec3(fract(pos.x/scale), fract(pos.y/scale), fract(pos.z/scale))
+  );
+}
+float perlin3d(vec3 pos, float seed, float startScale, float endScale) {
+  float scale = pow(2.0, startScale);
+  float endS = pow(2.0, endScale);
+  float max=0.0;
+  float curr=0.0;
+  for (int i=0; i<256; i++) {
+    max+=scale;
+    curr+=perlinStep3d(pos, seed, scale) * scale;
+    if (scale >= endS) {
+      return curr/max;
+    }
+    scale = scale*2.0;
+  }
+  return 0.0;
+}
+
 //see if intersected anything
 bool checkTile(vec3 pos) {
   //return pos == vec3(0, 0, 1);
-  return pos.y == -3.0;
+  //return pos.y == -3.0;
+  return perlin3d(pos, 0.0, 3.0, 5.0) > 0.7;
 }
 
 //raycast, returns hit (or fade out) position as XYZ and distance as W
@@ -69,7 +101,10 @@ vec4 raycast(vec3 start, vec3 end) {
     length(slopes[2])
   );
   vec3 rayPos = start;
-  for (int i=0; i<256; i++) {
+  if (offset == vec3(0.0, 0.0, 0.0)) {
+    return vec4(rayPos, 0);
+  }
+  for (int i=0; i<32768; i++) {
     vec3 tileAt = vec3(
       floor(rayPos.x) - float(offset.x < 0.0 && fract(rayPos.x)==0.0),
       floor(rayPos.y) - float(offset.y < 0.0 && fract(rayPos.y)==0.0),
@@ -114,9 +149,12 @@ vec4 raycast(vec3 start, vec3 end) {
 }
 
 void main() {
-  vec2 uv = (gl_FragCoord.xy * 2.0 - screenSize) / screenSize / 2.0;
+  vec2 uv = (gl_FragCoord.xy * 2.0 - screenSize) / screenSize.xx;
   vec4 rCast = raycast(camPos, vec3(uv, 1.0)+camPos);
+  //float perlin = perlin3d(vec3(gl_FragCoord.xy, 0.0), 0.0, 1.0, 5.0);
   gl_FragColor = vec4(1.0 - rCast.www/float(rayDist), 1.0);
+  //gl_FragColor = vec4(perlin, perlin, perlin, 1.0);
+  //gl_FragColor = vec4(uv, perlin3d(vec3(gl_FragCoord.xy, 0.0), 0.0, 3.0, 5.0), 1.0);
 }
 `;
 //make compiled versions of the shader
@@ -147,10 +185,12 @@ gl.uniform2f(screenSize, canvasgl.width, canvasgl.height);
 //get and set the camera position
 var cameraPosition = gl.getUniformLocation(program, "camPos");
 gl.uniform3f(cameraPosition, 0.0, 0.0, 0.0);
+var cameraRotation = gl.getUniformLocation(program, "camRot");
+gl.uniform3f(cameraRotation, 0.0, 0.0, 0.0);
 
 //get and set rayDist
 var rayDist = gl.getUniformLocation(program, "rayDist");
-gl.uniform1i(rayDist, 128);
+gl.uniform1i(rayDist, 256);
 
 //make 2 triangles that fill up the screen
 var position = gl.getAttribLocation(program, "position"); //get point shader value
@@ -326,20 +366,20 @@ function frame() {
   gl.uniform3f(cameraPosition, camPos.x, camPos.y, camPos.z);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
-  clear();
-  const vWid = canvas2d.width / scale;
-  const vHei = canvas2d.height / scale
-  for (let i = 0; i < vWid; i++) {
-    for (let j = 0; j < vHei; j++) {
-      let uv = {x: i/vWid-0.5, y: -j/vHei+0.5};
-      ctx.fillStyle = "white";
-      let cast = raycast(camPos, {x: camPos.x + uv.x, y: camPos.y + uv.y, z: camPos.z + 1});
-      // let cast = raycast(camPos, {x: camPos.x + uv.x + 1, y: camPos.y + uv.y, z: camPos.z + uv.x + 1});
-      //console.log(cast);
-      ctx.globalAlpha = Math.max((castDist - cast)/castDist, 0);
-      plotTile(i, j)
-    }
-  }
+  // clear();
+  // const vWid = canvas2d.width / scale;
+  // const vHei = canvas2d.height / scale
+  // for (let i = 0; i < vWid; i++) {
+  //   for (let j = 0; j < vHei; j++) {
+  //     let uv = {x: (i * 2 - vWid) / vWid, y: (j * 2 - vHei) / -vWid};
+  //     ctx.fillStyle = "white";
+  //     let cast = raycast(camPos, {x: camPos.x + uv.x, y: camPos.y + uv.y, z: camPos.z + 1});
+  //     // let cast = raycast(camPos, {x: camPos.x + uv.x + 1, y: camPos.y + uv.y, z: camPos.z + uv.x + 1});
+  //     //console.log(cast);
+  //     ctx.globalAlpha = Math.max((castDist - cast)/castDist, 0);
+  //     plotTile(i, j)
+  //   }
+  // }
 }
 frame();
 
