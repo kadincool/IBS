@@ -21,6 +21,10 @@ uniform vec2 screenSize;
 uniform vec3 camPos;
 uniform int rayDist;
 
+float ceilFloor(float number, bool toCeil) {
+  return (toCeil ? ceil(number) : floor(number));
+}
+
 float halfHash(float value) {
   return fract(sin(value * 1024.0));
 }
@@ -44,7 +48,8 @@ float serp3d(float v1, float v2, float v3, float v4, float v5, float v6, float v
 }
 
 bool checkTile(vec3 pos) {
-  return pos == vec3(0, 0, 1);
+  //return pos == vec3(0, 0, 1);
+  return pos.y == -3.0;
 }
 
 vec4 raycast(vec3 start, vec3 end) {
@@ -70,7 +75,13 @@ vec4 raycast(vec3 start, vec3 end) {
       return vec4(rayPos, distance(start, rayPos));
     }
     //forgot off??!!
-    vec3 dist = vec3(abs(offset * travelDist));
+    //vec3 off = ceilFloor(rayPos + sign(offset), offset < 0.0) - rayPos;
+    vec3 off = vec3(
+      ceilFloor(rayPos.x + sign(offset.x), offset.x < 0.0) - rayPos.x,
+      ceilFloor(rayPos.y + sign(offset.y), offset.y < 0.0) - rayPos.y,
+      ceilFloor(rayPos.z + sign(offset.z), offset.z < 0.0) - rayPos.z
+    );
+    vec3 dist = vec3(abs(off * travelDist));
     int travelAxis = -1;
     float axisTravelDist = 1.0/0.0; //set to Infinity
     if (offset.x != 0.0 && dist.x < axisTravelDist) {
@@ -83,11 +94,11 @@ vec4 raycast(vec3 start, vec3 end) {
       travelAxis = 2;
     }
     if (travelAxis == 0) {
-      rayPos += slopes[0] * offset.x;
+      rayPos += slopes[0] * off.x;
     } else if (travelAxis == 1) {
-      rayPos += slopes[1] * offset.y;
+      rayPos += slopes[1] * off.y;
     } else if (travelAxis == 2) {
-      rayPos += slopes[2] * offset.z;
+      rayPos += slopes[2] * off.z;
     }
     if (distance(start, rayPos) > float(rayDist)) {
       return vec4(vec3(0.0, 0.0, 0.0), rayDist);
@@ -97,8 +108,9 @@ vec4 raycast(vec3 start, vec3 end) {
 }
 
 void main() {
-  vec2 uv = (gl_FragCoord.xy * 2.0 - screenSize) / screenSize / 2.0;
-  gl_FragColor = vec4(raycast(camPos, vec3(uv, 1.0)+camPos).www/float(rayDist), 1.0);
+  vec2 uv = (gl_FragCoord.xy * 2.0 - screenSize) / screenSize;
+  vec4 rCast = raycast(camPos, vec3(uv, 1.0)+camPos);
+  gl_FragColor = vec4(rCast.www/float(rayDist), 1.0);
 }
 `;
 //make compiled versions of the shader
@@ -237,11 +249,12 @@ function perlin3d(x, y, z, seed, startScale, endScale) {
 
 function checkTile(x, y, z) {
   //console.log(x, y, z)
+  return y == -3
   //return y < x/2-8-z; //sloped terrain
   //return y==0 && z==1;//X pole
   //return x==0 && z==1;//Y pole
   //return x==1 && y==0;//Z pole
-  return x==0 && y==0 && z==1; //block
+  //return x==0 && y==0 && z==1; //block
   //return perlin3d(x, y, z, 0, 3, 5) > 0.7;
 }
 
