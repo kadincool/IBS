@@ -21,14 +21,15 @@ uniform vec2 screenSize;
 uniform vec3 camPos;
 uniform int rayDist;
 
+//boolean decides wether to round up or down
 float ceilFloor(float number, bool toCeil) {
   return (toCeil ? ceil(number) : floor(number));
 }
 
+//seeded spatial hash function
 float halfHash(float value) {
   return fract(sin(value * 1024.0));
 }
-
 float hash(float seed, vec3 pos) {
   float value = 0.0;
   value = halfHash(pos.x + seed);
@@ -37,6 +38,7 @@ float hash(float seed, vec3 pos) {
   return value;
 }
 
+//Sine intERPolation
 float serp(float v1, float v2, float pos) {
   return (sin((pos-0.5)*PI)/2.0+0.5)*(v2-v1)+v1;
 }
@@ -47,11 +49,13 @@ float serp3d(float v1, float v2, float v3, float v4, float v5, float v6, float v
   return serp(serp(serp(v1, v2, pos.x), serp(v3, v4, pos.x), pos.y), serp(serp(v5, v6, pos.x), serp(v7, v8, pos.x), pos.y), pos.z);
 }
 
+//see if intersected anything
 bool checkTile(vec3 pos) {
   //return pos == vec3(0, 0, 1);
   return pos.y == -3.0;
 }
 
+//raycast, returns hit (or fade out) position as XYZ and distance as W
 vec4 raycast(vec3 start, vec3 end) {
   vec3 offset = end - start;
   mat3 slopes = mat3(
@@ -82,14 +86,18 @@ vec4 raycast(vec3 start, vec3 end) {
     vec3 dist = vec3(abs(off * travelDist));
     int travelAxis = -1;
     float axisTravelDist = 1.0/0.0; //set to Infinity
+    //find closest axis
     if (offset.x != 0.0 && dist.x < axisTravelDist) {
       travelAxis = 0;
+      axisTravelDist = dist.x;
     }
     if (offset.y != 0.0 && dist.y < axisTravelDist) {
       travelAxis = 1;
+      axisTravelDist = dist.y;
     }
     if (offset.z != 0.0 && dist.z < axisTravelDist) {
       travelAxis = 2;
+      axisTravelDist = dist.z;
     }
     if (travelAxis == 0) {
       rayPos += slopes[0] * off.x;
@@ -106,7 +114,7 @@ vec4 raycast(vec3 start, vec3 end) {
 }
 
 void main() {
-  vec2 uv = (gl_FragCoord.xy * 2.0 - screenSize) / screenSize;
+  vec2 uv = (gl_FragCoord.xy * 2.0 - screenSize) / screenSize / 2.0;
   vec4 rCast = raycast(camPos, vec3(uv, 1.0)+camPos);
   gl_FragColor = vec4(1.0 - rCast.www/float(rayDist), 1.0);
 }
@@ -142,7 +150,7 @@ gl.uniform3f(cameraPosition, 0.0, 0.0, 0.0);
 
 //get and set rayDist
 var rayDist = gl.getUniformLocation(program, "rayDist");
-gl.uniform1i(rayDist, 8);
+gl.uniform1i(rayDist, 128);
 
 //make 2 triangles that fill up the screen
 var position = gl.getAttribLocation(program, "position"); //get point shader value
