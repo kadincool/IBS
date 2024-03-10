@@ -18,6 +18,7 @@ const fShader = `
 #define PI 3.1415926535897932384626433832795
 precision mediump float;
 uniform vec2 screenSize;
+uniform vec3 camPos;
 uniform int rayDist;
 
 float halfHash(float value) {
@@ -68,6 +69,7 @@ vec4 raycast(vec3 start, vec3 end) {
     if (checkTile(tileAt)) {
       return vec4(rayPos, distance(start, rayPos));
     }
+    //forgot off??!!
     vec3 dist = vec3(abs(offset * travelDist));
     int travelAxis = -1;
     float axisTravelDist = 1.0/0.0; //set to Infinity
@@ -96,7 +98,6 @@ vec4 raycast(vec3 start, vec3 end) {
 
 void main() {
   vec2 uv = (gl_FragCoord.xy * 2.0 - screenSize) / screenSize / 2.0;
-  vec3 camPos = vec3(0.0, 0.0, 1.0);
   gl_FragColor = vec4(raycast(camPos, vec3(uv, 1.0)+camPos).www/float(rayDist), 1.0);
 }
 `;
@@ -113,7 +114,7 @@ gl.compileShader(fs);
 const program = gl.createProgram();
 gl.attachShader(program, vs);
 gl.attachShader(program, fs);
-gl.linkProgram(program);
+gl.linkProgram(program); 
 gl.useProgram(program);
 
 //log errors
@@ -124,6 +125,10 @@ console.log("Program:", gl.getProgramInfoLog(program));
 //get and set screenSize uniform
 var screenSize = gl.getUniformLocation(program, "screenSize");
 gl.uniform2f(screenSize, canvasgl.width, canvasgl.height);
+
+//get and set the camera position
+var cameraPosition = gl.getUniformLocation(program, "camPos");
+gl.uniform3f(cameraPosition, 0.0, 0.0, 0.0);
 
 //get and set rayDist
 var rayDist = gl.getUniformLocation(program, "rayDist");
@@ -299,6 +304,9 @@ function raycast(start, direction) {
 }
 
 function frame() {
+  gl.uniform3f(cameraPosition, camPos.x, camPos.y, camPos.z);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
   clear();
   const vWid = canvas2d.width / scale;
   const vHei = canvas2d.height / scale
