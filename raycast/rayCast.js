@@ -74,8 +74,6 @@ vec4 raycast(vec3 start, vec3 end) {
     if (checkTile(tileAt)) {
       return vec4(rayPos, distance(start, rayPos));
     }
-    //forgot off??!!
-    //vec3 off = ceilFloor(rayPos + sign(offset), offset < 0.0) - rayPos;
     vec3 off = vec3(
       ceilFloor(rayPos.x + sign(offset.x), offset.x < 0.0) - rayPos.x,
       ceilFloor(rayPos.y + sign(offset.y), offset.y < 0.0) - rayPos.y,
@@ -110,7 +108,7 @@ vec4 raycast(vec3 start, vec3 end) {
 void main() {
   vec2 uv = (gl_FragCoord.xy * 2.0 - screenSize) / screenSize;
   vec4 rCast = raycast(camPos, vec3(uv, 1.0)+camPos);
-  gl_FragColor = vec4(rCast.www/float(rayDist), 1.0);
+  gl_FragColor = vec4(1.0 - rCast.www/float(rayDist), 1.0);
 }
 `;
 //make compiled versions of the shader
@@ -325,7 +323,7 @@ function frame() {
   const vHei = canvas2d.height / scale
   for (let i = 0; i < vWid; i++) {
     for (let j = 0; j < vHei; j++) {
-      let uv = {x: i/vWid-0.5, y: j/vHei-0.5};
+      let uv = {x: i/vWid-0.5, y: -j/vHei+0.5};
       ctx.fillStyle = "white";
       let cast = raycast(camPos, {x: camPos.x + uv.x, y: camPos.y + uv.y, z: camPos.z + 1});
       // let cast = raycast(camPos, {x: camPos.x + uv.x + 1, y: camPos.y + uv.y, z: camPos.z + uv.x + 1});
@@ -351,10 +349,10 @@ document.addEventListener("keydown", (e) => {
     case("KeyA"):
       camPos.x-=0.1;
       break;
-    case("KeyQ"):
+    case("KeyE"):
       camPos.y+=0.1;
       break;
-    case("KeyE"):
+    case("KeyQ"):
       camPos.y-=0.1;
       break;
   }
