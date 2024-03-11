@@ -48,6 +48,7 @@ float serp3d(float v1, float v2, float v3, float v4, float v5, float v6, float v
   return serp(serp(serp(v1, v2, pos.x), serp(v3, v4, pos.x), pos.y), serp(serp(v5, v6, pos.x), serp(v7, v8, pos.x), pos.y), pos.z);
 }
 
+//perlin noise 3d
 float perlinStep3d(vec3 pos, float seed, float scale) {
   return serp3d(
     hash(seed, vec3(floor(pos.x/scale)*scale, floor(pos.y/scale)*scale, floor(pos.z/scale)*scale)),
@@ -81,7 +82,9 @@ float perlin3d(vec3 pos, float seed, float startScale, float endScale) {
 bool checkTile(vec3 pos) {
   //return pos == vec3(0, 0, 1);
   //return pos.y == -3.0;
-  return perlin3d(pos, 0.0, 3.0, 5.0) > 0.7;
+  //return pos.y < pos.x / 4.0 - pos.z - 5.0;
+  if (pos.y < sin(pos.x/10.0) * 15.0 - 5.0) return true;
+  if (perlin3d(pos, 0.0, 3.0, 5.0) > 0.7) return true;
 }
 
 //raycast, returns hit (or fade out) position as XYZ and distance as W
@@ -161,7 +164,7 @@ mat3 raycast(vec3 start, vec3 end) {
     //if too far return 0 and max dist
     if (distance(start, rayPos) > float(rayDist)) {
       return mat3(
-        normalize(rayPos)*float(rayDist), 
+        normalize(rayPos-start)*float(rayDist)+start, 
         vec3(0.0, 0.0, 0.0),
         normalize(-offset)
       );
@@ -169,7 +172,7 @@ mat3 raycast(vec3 start, vec3 end) {
   }
   //pos, UV, normal
   return mat3(
-    normalize(rayPos)*float(rayDist), 
+    normalize(rayPos-start)*float(rayDist)+start, 
     vec3(0.0, 0.0, 0.0),
     normalize(-offset)
   );
@@ -182,10 +185,9 @@ void main() {
   castDir = (vec4(castDir, 1.0) * camRot).xyz;
   mat3 rCast = raycast(camPos, castDir+camPos);
   float dist = distance(camPos, rCast[0]);
-  //float perlin = perlin3d(vec3(gl_FragCoord.xy, 0.0), 0.0, 1.0, 5.0);
   // gl_FragColor = vec4(rCast[1]*max(dot(lightDir, rCast[2]), 0.1)*(1.0-dist/float(rayDist)), 1.0);
-  gl_FragColor = vec4(rCast[1]*(1.0-dist/float(rayDist)), 1.0);
-  //gl_FragColor = vec4(perlin, perlin, perlin, 1.0);
+  gl_FragColor = vec4(vec3(1.0, 1.0, 1.0)*max(dot(lightDir, rCast[2]), 0.1)*(1.0-dist/float(rayDist)), 1.0);
+  // gl_FragColor = vec4(rCast[1]*(1.0-dist/float(rayDist)), 1.0);
   //gl_FragColor = vec4(uv, perlin3d(vec3(gl_FragCoord.xy, 0.0), 0.0, 3.0, 5.0), 1.0);
 }
 `;
@@ -238,8 +240,8 @@ gl.enableVertexAttribArray(posBuffer); //enables the array
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
 var scale = 1;
-const castDist = 64*scale*scale;
-const moveSpeed = 0.05;
+const castDist = 256;
+const moveSpeed = 0.25;
 const rotSpeed = 2.5;
 var keys = {};
 
