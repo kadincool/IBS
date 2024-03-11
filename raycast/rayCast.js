@@ -85,7 +85,7 @@ bool checkTile(vec3 pos) {
 }
 
 //raycast, returns hit (or fade out) position as XYZ and distance as W
-vec4 raycast(vec3 start, vec3 end) {
+mat3 raycast(vec3 start, vec3 end) {
   //make ray data
   vec3 offset = end - start;
   mat3 slopes = mat3(
@@ -100,7 +100,11 @@ vec4 raycast(vec3 start, vec3 end) {
   );
   vec3 rayPos = start;
   if (offset == vec3(0.0, 0.0, 0.0)) {
-    return vec4(rayPos, 0);
+    return mat3(
+      rayPos, 
+      vec3(0.0, 0.0, 0.0),
+      normalize(vec3(0.0, 1.0, 0.0))
+    );
   }
   //basically a while true
   for (int i=0; i<32768; i++) {
@@ -111,7 +115,16 @@ vec4 raycast(vec3 start, vec3 end) {
       floor(rayPos.z) - float(offset.z < 0.0 && fract(rayPos.z)==0.0)
     );
     if (checkTile(tileAt)) {
-      return vec4(rayPos, distance(start, rayPos));
+      //return vec4(rayPos, distance(start, rayPos));
+      return mat3(
+        rayPos,
+        vec3(1.0, 1.0, 1.0),
+        normalize(vec3(
+          float(fract(rayPos.x)==0.0) * -sign(offset.x), 
+          float(fract(rayPos.y)==0.0) * -sign(offset.y), 
+          float(fract(rayPos.z)==0.0) * -sign(offset.z)
+        ))
+      );
     }
     //get offset and distance to nearest directiom
     vec3 off = vec3(
@@ -146,19 +159,30 @@ vec4 raycast(vec3 start, vec3 end) {
     }
     //if too far return 0 and max dist
     if (distance(start, rayPos) > float(rayDist)) {
-      return vec4(vec3(0.0, 0.0, 0.0), rayDist);
+      return mat3(
+        normalize(rayPos)*float(rayDist), 
+        vec3(0.0, 0.0, 0.0),
+        normalize(-offset)
+      );
     }
   }
-  return vec4(rayPos, distance(start, rayPos));
+  //pos, color, normal
+  return mat3(
+    normalize(rayPos)*float(rayDist), 
+    vec3(0.0, 0.0, 0.0),
+    normalize(-offset)
+  );
 }
 
 void main() {
   vec2 uv = (gl_FragCoord.xy * 2.0 - screenSize) / screenSize.xx;
   vec3 castDir = vec3(uv, 1.0);
+  vec3 lightDir = normalize(vec3(1.0, 3.0, 2.0));
   castDir = (vec4(castDir, 1.0) * camRot).xyz;
-  vec4 rCast = raycast(camPos, castDir+camPos);
+  mat3 rCast = raycast(camPos, castDir+camPos);
+  float dist = distance(camPos, rCast[0]);
   //float perlin = perlin3d(vec3(gl_FragCoord.xy, 0.0), 0.0, 1.0, 5.0);
-  gl_FragColor = vec4(1.0 - rCast.www/float(rayDist), 1.0);
+  gl_FragColor = vec4(rCast[1]*max(dot(lightDir, rCast[2]), 0.1)*(1.0-dist/float(rayDist)), 1.0);
   //gl_FragColor = vec4(perlin, perlin, perlin, 1.0);
   //gl_FragColor = vec4(uv, perlin3d(vec3(gl_FragCoord.xy, 0.0), 0.0, 3.0, 5.0), 1.0);
 }
