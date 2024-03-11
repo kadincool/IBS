@@ -241,7 +241,7 @@ const moveSpeed = 0.2;
 const rotSpeed = 1;
 var keys = {};
 
-var camPos = {x: 0, y: 0, z: 350};
+var camPos = {x: 0, y: 0, z: 350}; //github keeps refusing to update
 var camRot = {x: 0, y: 0, z: 0};
 
 function frame() {
