@@ -118,7 +118,8 @@ mat3 raycast(vec3 start, vec3 end) {
       //return vec4(rayPos, distance(start, rayPos));
       return mat3(
         rayPos,
-        vec3(1.0, 1.0, 1.0),
+        //vec3(1.0, 1.0, 1.0),
+        rayPos-tileAt,
         normalize(vec3(
           float(fract(rayPos.x)==0.0) * -sign(offset.x), 
           float(fract(rayPos.y)==0.0) * -sign(offset.y), 
@@ -166,7 +167,7 @@ mat3 raycast(vec3 start, vec3 end) {
       );
     }
   }
-  //pos, color, normal
+  //pos, UV, normal
   return mat3(
     normalize(rayPos)*float(rayDist), 
     vec3(0.0, 0.0, 0.0),
@@ -182,7 +183,8 @@ void main() {
   mat3 rCast = raycast(camPos, castDir+camPos);
   float dist = distance(camPos, rCast[0]);
   //float perlin = perlin3d(vec3(gl_FragCoord.xy, 0.0), 0.0, 1.0, 5.0);
-  gl_FragColor = vec4(rCast[1]*max(dot(lightDir, rCast[2]), 0.1)*(1.0-dist/float(rayDist)), 1.0);
+  // gl_FragColor = vec4(rCast[1]*max(dot(lightDir, rCast[2]), 0.1)*(1.0-dist/float(rayDist)), 1.0);
+  gl_FragColor = vec4(rCast[1]*(1.0-dist/float(rayDist)), 1.0);
   //gl_FragColor = vec4(perlin, perlin, perlin, 1.0);
   //gl_FragColor = vec4(uv, perlin3d(vec3(gl_FragCoord.xy, 0.0), 0.0, 3.0, 5.0), 1.0);
 }
@@ -236,12 +238,12 @@ gl.enableVertexAttribArray(posBuffer); //enables the array
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
 var scale = 1;
-const castDist = 64;
-const moveSpeed = 0.2;
-const rotSpeed = 1;
+const castDist = 64*scale*scale;
+const moveSpeed = 0.05;
+const rotSpeed = 2.5;
 var keys = {};
 
-var camPos = {x: 0, y: 0, z: 350}; //github keeps refusing to update
+var camPos = {x: 0, y: 0, z: 0}; //github keeps refusing to update
 var camRot = {x: 0, y: 0, z: 0};
 
 function frame() {
@@ -284,8 +286,8 @@ function frame() {
   // };
   // if (keys.KeyD) camPos.x += 0.2;
   // if (keys.KeyA) camPos.x -= 0.2;
-  if (keys.KeyE) camPos.y += 0.2;
-  if (keys.KeyQ) camPos.y -= 0.2;
+  if (keys.KeyE) camPos.y += moveSpeed;
+  if (keys.KeyQ) camPos.y -= moveSpeed;
 
   if (keys.ArrowLeft) camRot.y += rotSpeed;
   if (keys.ArrowRight) camRot.y -= rotSpeed;
