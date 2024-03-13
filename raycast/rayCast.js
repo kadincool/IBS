@@ -96,6 +96,11 @@ mat3 raycast(vec3 start, vec3 end) {
     offset.x / offset.y, offset.y / offset.y, offset.z / offset.y,
     offset.x / offset.z, offset.y / offset.z, offset.z / offset.z
   );
+  mat3 intercepts = mat3(
+    0, start.y - slopes[0][1] * start.x, start.z - slopes[0][2] * start.x,
+    start.x - slopes[1][0] * start.y, 0, start.z - slopes[2][1] * start.y,
+    start.x - slopes[2][0] * start.z, start.y - slopes[2][1] * start.z, 0
+  );
   vec3 travelDist = vec3(
     length(slopes[0]),
     length(slopes[1]),
@@ -110,7 +115,8 @@ mat3 raycast(vec3 start, vec3 end) {
     );
   }
   //basically a while true
-  for (int i=0; i<32768; i++) {
+  for (int i=0; i<256; i++) {
+    // for (int i=0; i<32768; i++) {
     //check current tile
     vec3 tileAt = vec3(
       floor(rayPos.x) - float(offset.x < 0.0 && fract(rayPos.x)==0.0),
@@ -240,7 +246,7 @@ gl.enableVertexAttribArray(posBuffer); //enables the array
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
 var scale = 1;
-const castDist = 256;
+const castDist = 128;
 const moveSpeed = 0.25;
 const rotSpeed = 2.5;
 var keys = {};
@@ -307,7 +313,7 @@ function frame() {
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
   gl.finish();
-  console.log(performance.now()-renderStart);
+  //console.log(performance.now()-renderStart);
   requestAnimationFrame(frame);
 }
 frame();
