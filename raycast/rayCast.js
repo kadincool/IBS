@@ -276,20 +276,20 @@ function frame() {
     camPos.y -= camMatrix.m21 * moveSpeed;
     camPos.z -= camMatrix.m31 * moveSpeed;
   };
-  // if (keys.KeyE) {
-  //   camPos.x += camMatrix.m12 * moveSpeed;
-  //   camPos.y += camMatrix.m22 * moveSpeed;
-  //   camPos.z += camMatrix.m32 * moveSpeed;
-  // };
-  // if (keys.KeyQ) {
-  //   camPos.x -= camMatrix.m12 * moveSpeed;
-  //   camPos.y -= camMatrix.m22 * moveSpeed;
-  //   camPos.z -= camMatrix.m32 * moveSpeed;
-  // };
+  if (keys.KeyE) {
+    camPos.x += camMatrix.m12 * moveSpeed;
+    camPos.y += camMatrix.m22 * moveSpeed;
+    camPos.z += camMatrix.m32 * moveSpeed;
+  };
+  if (keys.KeyQ) {
+    camPos.x -= camMatrix.m12 * moveSpeed;
+    camPos.y -= camMatrix.m22 * moveSpeed;
+    camPos.z -= camMatrix.m32 * moveSpeed;
+  };
   // if (keys.KeyD) camPos.x += 0.2;
   // if (keys.KeyA) camPos.x -= 0.2;
-  if (keys.KeyE) camPos.y += moveSpeed;
-  if (keys.KeyQ) camPos.y -= moveSpeed;
+  // if (keys.KeyE) camPos.y += moveSpeed;
+  // if (keys.KeyQ) camPos.y -= moveSpeed;
 
   if (keys.ArrowLeft) camRot.y += rotSpeed;
   if (keys.ArrowRight) camRot.y -= rotSpeed;
@@ -297,6 +297,7 @@ function frame() {
   if (keys.ArrowDown) camRot.x -= rotSpeed;
 
   //render
+  let renderStart = performance.now();
   canvasgl.width = Math.ceil(window.innerWidth/scale);
   canvasgl.height = Math.ceil(window.innerHeight/scale);
   gl.uniform3f(cameraPosition, camPos.x, camPos.y, camPos.z);
@@ -305,6 +306,8 @@ function frame() {
   gl.uniform1i(rayDist, castDist);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
+  gl.finish();
+  console.log(performance.now()-renderStart);
   requestAnimationFrame(frame);
 }
 frame();
