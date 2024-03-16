@@ -210,6 +210,14 @@ mat3 raycast(vec3 start, vec3 end) {
   );
 }
 
+// vec3 getUVColor(vec3 uv) {
+//   uv = clamp(floor(uv*4.0), 0.0, 3.0);
+//   if (tileDat[int(uv.z)]>>int(uv.x+uv.y*4)&1==1) {
+//     return color2;
+//   }
+//   return color1;
+// }
+
 void main() {
   vec2 uv = (gl_FragCoord.xy * 2.0 - screenSize) / screenSize.xx;
   vec3 castDir = vec3(uv, 1.0);
@@ -249,9 +257,17 @@ console.log("Program:", gl.getProgramInfoLog(program));
 var screenSize = gl.getUniformLocation(program, "screenSize");
 var cameraPosition = gl.getUniformLocation(program, "camPos");
 var cameraRotation = gl.getUniformLocation(program, "camRot");
-
-//get and set rayDist
 var rayDist = gl.getUniformLocation(program, "rayDist");
+
+//pass tileData
+var tileData = new Int16Array([
+  0b0000000000000000,
+  0b0011001111001100,
+  0b1100110000110011,
+  0b0000000000000000,
+]);
+var tileDataPointer = gl.getUniformLocation(program, "tileDat");
+gl.uniform1iv(tileDataPointer, tileData);
 
 //make 2 triangles that fill up the screen
 var position = gl.getAttribLocation(program, "position"); //get point shader value
