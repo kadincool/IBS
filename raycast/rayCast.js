@@ -1,7 +1,9 @@
 const canvasgl = document.getElementById("canvasgl");
 canvasgl.width = window.innerWidth;
 canvasgl.height = window.innerHeight;
-const gl = canvasgl.getContext("webgl");
+const gl = canvasgl.getContext("webgl2");
+
+var lastFrame = 0;
 
 const vShader = `
 attribute vec4 position;
@@ -19,6 +21,29 @@ uniform vec2 screenSize;
 uniform vec3 camPos;
 uniform mat4 camRot;
 uniform int rayDist;
+uniform int tileDat[4];
+
+vec3 color1 = vec3(1.0, 1.0, 1.0);
+vec3 color2 = vec3(0.0, 0.0, 1.0);
+
+// bool tileDat[64] = bool[](
+//   false, false, false, false,
+//   false, false, false, false,
+//   false, false, false, false,
+//   false, false, false, false,
+//   false, false, true, true,
+//   false, false, true, true,
+//   true, true, false, false,
+//   true, true, false, false,
+//   true, true, false, false,
+//   true, true, false, false,
+//   false, false, true, true,
+//   false, false, true, true,
+//   false, false, false, false,
+//   false, false, false, false,
+//   false, false, false, false,
+//   false, false, false, false,
+// );
 
 //boolean decides wether to round up or down
 float ceilFloor(float number, bool toCeil) {
@@ -83,8 +108,9 @@ bool checkTile(vec3 pos) {
   //return pos == vec3(0, 0, 1);
   //return pos.y == -3.0;
   //return pos.y < pos.x / 4.0 - pos.z - 5.0;
-  if (pos.y < sin(pos.x/10.0) * 15.0 - 5.0) return true;
-  if (perlin3d(pos, 0.0, 3.0, 5.0) > 0.7) return true;
+  // if (pos.y < sin(pos.x/10.0) * 15.0 - 5.0) return true; //sine floor
+  // if (perlin3d(pos, 0.0, 3.0, 5.0) > 0.7) return true; //perlin noise
+  if (perlin3d(pos, 0.0, 2.0, 7.0) > 0.3) return true; //perlin caves
 }
 
 //raycast, returns hit (or fade out) position as XYZ and distance as W
@@ -115,8 +141,8 @@ mat3 raycast(vec3 start, vec3 end) {
     );
   }
   //basically a while true
-  for (int i=0; i<256; i++) {
-    // for (int i=0; i<32768; i++) {
+  for (int i=0; i<1024; i++) {
+  // for (int i=0; i<32768; i++) {
     //check current tile
     vec3 tileAt = vec3(
       floor(rayPos.x) - float(offset.x < 0.0 && fract(rayPos.x)==0.0),
@@ -192,7 +218,8 @@ void main() {
   mat3 rCast = raycast(camPos, castDir+camPos);
   float dist = distance(camPos, rCast[0]);
   // gl_FragColor = vec4(rCast[1]*max(dot(lightDir, rCast[2]), 0.1)*(1.0-dist/float(rayDist)), 1.0);
-  gl_FragColor = vec4(vec3(1.0, 1.0, 1.0)*max(dot(lightDir, rCast[2]), 0.1)*(1.0-dist/float(rayDist)), 1.0);
+  gl_FragColor = vec4((floor(rCast[1]*4.0)/4.0*0.7 + vec3(1.0, 1.0, 1.0) * 0.3)*max(dot(lightDir, rCast[2]), 0.1)*(1.0-dist/float(rayDist)), 1.0);
+  // gl_FragColor = vec4(vec3(1.0, 1.0, 1.0)*max(dot(lightDir, rCast[2]), 0.1)*(1.0-dist/float(rayDist)), 1.0);
   // gl_FragColor = vec4(rCast[1]*(1.0-dist/float(rayDist)), 1.0);
   //gl_FragColor = vec4(uv, perlin3d(vec3(gl_FragCoord.xy, 0.0), 0.0, 3.0, 5.0), 1.0);
 }
@@ -246,15 +273,15 @@ gl.enableVertexAttribArray(posBuffer); //enables the array
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
 var scale = 1;
-const castDist = 128;
+const castDist = 256;
 const moveSpeed = 0.25;
 const rotSpeed = 2.5;
 var keys = {};
 
-var camPos = {x: 0, y: 0, z: 0}; //github keeps refusing to update
+var camPos = {x: 130, y: 130, z: 150};
 var camRot = {x: 0, y: 0, z: 0};
 
-function frame() {
+function frame(now) {
   let camMatrix = new DOMMatrix();
   // camMatrix.rotateSelf(camRot.x, camRot.y, camRot.z);
   camMatrix.rotateSelf(camRot.x, 0, 0);
@@ -302,21 +329,25 @@ function frame() {
   if (keys.ArrowUp) camRot.x += rotSpeed;
   if (keys.ArrowDown) camRot.x -= rotSpeed;
 
+  now *= 0.001;
+  let delta = now - lastFrame;
+  let fps = 1/delta;
+  console.log(fps.toFixed(1));
+  lastFrame = now;
+
   //render
-  let renderStart = performance.now();
-  canvasgl.width = Math.ceil(window.innerWidth/scale);
-  canvasgl.height = Math.ceil(window.innerHeight/scale);
+  // canvasgl.width = Math.ceil(window.innerWidth/scale);
+  // canvasgl.height = Math.ceil(window.innerHeight/scale);
+  gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
   gl.uniform3f(cameraPosition, camPos.x, camPos.y, camPos.z);
   gl.uniformMatrix4fv(cameraRotation, false, camMatrix.toFloat32Array());
   gl.uniform2f(screenSize, canvasgl.width, canvasgl.height);
   gl.uniform1i(rayDist, castDist);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
-  gl.finish();
-  //console.log(performance.now()-renderStart);
   requestAnimationFrame(frame);
 }
-frame();
+requestAnimationFrame(frame);
 console.log(new DOMMatrix().rotateSelf(0, 45, 0));
 
 document.addEventListener("keydown", (e) => {
